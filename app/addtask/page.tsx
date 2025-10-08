@@ -38,21 +38,28 @@ export default function Page() {
 
     if (image_file) {
       const fileName = `${Date.now()}-${image_file.name}`;
-      const { error: uploadError } = await supabase.storage
+
+      const { data, error: uploadError } = await supabase.storage
         .from("task_bk")
         .upload(fileName, image_file);
 
       if (uploadError) {
-        console.error("Upload error:", uploadError.message);
+        console.error("Image upload error:", uploadError.message);
         alert("Failed to upload image.");
         return;
       }
 
-      const { data: publicUrl } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from("task_bk")
         .getPublicUrl(fileName);
 
-      uploadedImageUrl = publicUrl.publicUrl;
+      if (!urlData || !urlData.publicUrl) {
+        console.error("Error retrieving image URL: publicUrl not found");
+        alert("Failed to retrieve image URL.");
+        return;
+      }
+
+      uploadedImageUrl = urlData.publicUrl;
     }
 
     const { error: dbError } = await supabase.from("task_tb").insert([
